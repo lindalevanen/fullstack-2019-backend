@@ -1,5 +1,15 @@
 const express = require('express')
 const app = express()
+const morgan = require('morgan');
+
+const bodyParser = require('body-parser')
+
+morgan.token('body', function(req, res) {
+	return JSON.stringify(req.body);
+});
+
+app.use(bodyParser.json())
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 let persons = [
   {
@@ -27,6 +37,13 @@ app.get('/api/persons', (req, res) => {
   res.json(persons)
 })
 
+app.get('/info', (req, res) => {
+  const noOfPersons = persons.length
+  const timeNow = new Date(Date.now()).toUTCString()
+  const infoString = `Phonebook has info of ${noOfPersons} people \n ${timeNow}`
+  res.send(infoString)
+})
+
 app.get('/api/persons/:id', (request, response) => {
   const id = Number(request.params.id)
   const person = persons.find(person => person.id === id)
@@ -45,20 +62,27 @@ app.delete('/api/persons/:id', (request, response) => {
 })
 
 const generateId = () => {
-  const maxId = persons.length > 0
-    ? Math.max(...persons.map(n => n.id))
-    : 0
-  return maxId + 1
+  return parseInt(Math.random() * 10000000000)
 }
-
-
 
 app.post('/api/persons', (request, response) => {
   const body = request.body
 
-  if (!body.content) {
+  if (!body.name) {
     return response.status(400).json({ 
-      error: 'content missing' 
+      error: 'Name missing' 
+    })
+  }
+
+  if (!body.number) {
+    return response.status(400).json({ 
+      error: 'Number missing' 
+    })
+  }
+
+  if (persons.map(p => p.name).includes(body.name)) {
+    return response.status(400).json({ 
+      error: 'Name must be unique' 
     })
   }
 
