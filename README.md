@@ -2,6 +2,6 @@
 The backend exercises for the Fullstack Mooc 2019 course.
 
 
-### Osa 3b Heroku app persons backend with osa 2 static build of Puhelinluettelo frontend
+### Heroku app persons backend with osa 2 static build of Puhelinluettelo frontend (Until part 3b)
 
-https://stormy-atoll-42948.herokuapp.com/
+https://stormy-peak-83033.herokuapp.com/
