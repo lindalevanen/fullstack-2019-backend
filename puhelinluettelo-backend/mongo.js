@@ -7,7 +7,7 @@ if ( process.argv.length<3 ) {
 
 const password = process.argv[2]
 
-const url = 
+const url =
   `mongodb+srv://fullstack:${password}@cluster0-xscvg.mongodb.net/test?retryWrites=true`
 
 mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -27,18 +27,18 @@ if(possibleName && possibleNumber) {
     name: possibleName,
     number: possibleNumber
   })
-  
-  person.save().then(response => {
+
+  person.save().then(() => {
     console.log(`added ${possibleName} number ${possibleNumber} to phonebook`)
-    mongoose.connection.close();
+    mongoose.connection.close()
   })
-  
+
 } else {
-  console.log("phonebook:")
+  console.log('phonebook:')
   Person
     .find({})
     .then(persons => {
-      for (p of persons) {
+      for (const p of persons) {
         console.log(p.name, p.number)
       }
       mongoose.connection.close()

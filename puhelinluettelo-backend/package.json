@@ -6,9 +6,11 @@
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "fix": "eslint . --fix",
     "build:ui": "rm -rf build && cd ../../fullstack-2019/osa2/puhelinluettelo && npm run build --prod && cp -r build ../../../fullstack-2019-backend/puhelinluettelo-backend",
     "deploy": "git push heroku master",
-    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push && npm run deploy",
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && npm run deploy",
     "logs:prod": "heroku logs --tail"
   },
   "author": "",
@@ -20,5 +22,8 @@
     "mongoose": "^5.7.12",
     "mongoose-unique-validator": "^2.0.3",
     "morgan": "^1.9.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.7.1"
   }
 }

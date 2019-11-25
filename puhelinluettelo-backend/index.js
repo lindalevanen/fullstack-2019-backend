@@ -1,13 +1,13 @@
 require('dotenv').config()
 const express = require('express')
 const app = express()
-const morgan = require('morgan');
+const morgan = require('morgan')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 
-morgan.token('body', function(req, res) {
-	return JSON.stringify(req.body);
-});
+morgan.token('body', function(req) {
+  return JSON.stringify(req.body)
+})
 
 app.use(express.static('build'))
 app.use(bodyParser.json())
@@ -26,7 +26,7 @@ app.get('/api/persons', (req, res, next) => {
   }).catch(e => next(e))
 })
 
-app.get('/info', (req, res) => {
+app.get('/info', (req, res, next) => {
   Person.find({}).then(persons => {
     const noOfPersons = persons.length
     const timeNow = new Date(Date.now()).toUTCString()
@@ -40,14 +40,14 @@ app.get('/api/persons/:id', (req, res, next) => {
     if(person) {
       res.json(person.toJSON())
     } else {
-      res.status(404).end()  
+      res.status(404).end()
     }
   }).catch(e => next(e))
 })
 
 app.delete('/api/persons/:id', (req, res, next) => {
   Person.findByIdAndRemove(req.params.id)
-    .then(result => {
+    .then(() => {
       res.status(204).end()
     })
     .catch(error => next(error))
@@ -56,7 +56,7 @@ app.delete('/api/persons/:id', (req, res, next) => {
 app.put('/api/persons/:id', (req, res, next) => {
   const body = req.body
 
-  Person.findByIdAndUpdate(req.params.id, 
+  Person.findByIdAndUpdate(req.params.id,
     { number: body.number },
     { new: true, runValidators: true, context: 'query' })
     .then(updatedPerson => {
@@ -80,12 +80,12 @@ app.post('/api/persons', (req, res, next) => {
     name: body.name,
     number: body.number,
   })
-  
+
   person.save().then(response => {
-    console.log('person saved!');
+    console.log('person saved!')
     res.json(response)
   }).catch(e => next(e))
-  
+
 })
 
 const unknownEndpoint = (req, res) => {
@@ -98,7 +98,7 @@ app.use(unknownEndpoint)
 const errorHandler = (error, req, res, next) => {
   console.error(error.message)
 
-  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+  if (error.name === 'CastError' && error.kind == 'ObjectId') { // eslint-disable-line
     return res.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
     return res.status(400).json({ error: error.message })
