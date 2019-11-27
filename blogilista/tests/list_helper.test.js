@@ -87,3 +87,67 @@ describe('total likes', () => {
     expect(result).toBe(36)
   })
 })
+
+describe('favorite blog', () => {
+
+  test('of empty list is null', () => {
+    const result = listHelper.favoriteBlog(emptyList)
+    expect(result).toEqual(null)
+  })
+  test('of list of one item is the item', () => {
+    const result = listHelper.favoriteBlog(listWithOneBlog)
+    expect(result).toEqual(listWithOneBlog[0])
+  })
+  test('of a bigger list is the most liked blog', () => {
+    const result = listHelper.favoriteBlog(manyBlogs)
+    expect(result).toEqual(manyBlogs[2])
+  })
+})
+
+describe('most blogs', () => {
+
+  test('of empty list is null', () => {
+    const result = listHelper.mostBlogs(emptyList)
+    expect(result).toEqual(null)
+  })
+  test('of list of one item is the only author in it', () => {
+    const result = listHelper.mostBlogs(listWithOneBlog)
+    const correctRes = {
+      author: 'Edsger W. Dijkstra',
+      blogs: 1
+    }
+    expect(result).toEqual(correctRes)
+  })
+  test('of a bigger list is the author that has the most blogs', () => {
+    const result = listHelper.mostBlogs(manyBlogs)
+    const correctRes = {
+      author: 'Robert C. Martin',
+      blogs: 3
+    }
+    expect(result).toEqual(correctRes)
+  })
+})
+
+describe('most likes', () => {
+
+  test('of empty list is null', () => {
+    const result = listHelper.mostLikes(emptyList)
+    expect(result).toEqual(null)
+  })
+  test('of list of one item is the only author in it', () => {
+    const result = listHelper.mostLikes(listWithOneBlog)
+    const correctRes = {
+      author: 'Edsger W. Dijkstra',
+      likes: 5
+    }
+    expect(result).toEqual(correctRes)
+  })
+  test('of a bigger list is the author that has the most likes', () => {
+    const result = listHelper.mostLikes(manyBlogs)
+    const correctRes = {
+      author: 'Edsger W. Dijkstra',
+      likes: 17
+    }
+    expect(result).toEqual(correctRes)
+  })
+})
