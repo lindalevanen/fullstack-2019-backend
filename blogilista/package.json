@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon start",
-    "test": "jest --verbose",
+    "start": "NODE_ENV=production node index.js",
+    "watch": "NODE_ENV=development nodemon index.js",
+    "test": "NODE_ENV=test jest --verbose --runInBand",
     "lint": "eslint .",
     "fix": "eslint . --fix"
   },
@@ -22,7 +23,8 @@
   "devDependencies": {
     "eslint": "^6.7.1",
     "jest": "^24.9.0",
-    "nodemon": "^2.0.1"
+    "nodemon": "^2.0.1",
+    "supertest": "^4.0.2"
   },
   "jest": {
     "testEnvironment": "node"
