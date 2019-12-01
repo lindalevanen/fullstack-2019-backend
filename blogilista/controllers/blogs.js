@@ -1,42 +1,48 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
-blogsRouter.get('/', async (request, response, next) => {
-  Blog
-    .find({})
-    .then(blogs => {
-      response.json(blogs)
-    }).catch(e => next(e))
+blogsRouter.get('/', async (request, response) => {
+  const blogs = await Blog.find({}).populate('author')
+  response.json(blogs.map(b => b.toJSON()))
 })
 
-blogsRouter.post('/', (request, response, next) => {
-  const blog = new Blog(request.body)
+blogsRouter.post('/', async (request, response, next) => {
+  const user = await User.findById(request.body.userId)
 
-  blog
-    .save()
-    .then(result => {
-      response.status(201).json(result)
-    }).catch(e => next(e))
+  const blog = new Blog({ ...request.body, author: user._id })
+
+  try {
+    const savedBlog = await blog.save()
+    user.blogs = user.blogs.concat(savedBlog._id)
+    await user.save()
+    response.status(201).json(savedBlog)
+  } catch(exception) {
+    next(exception)
+  }
 })
 
 blogsRouter.delete('/:id', async (req, res, next) => {
-  Blog.findByIdAndRemove(req.params.id)
-    .then(() => {
-      res.status(204).end()
-    })
-    .catch(error => next(error))
+  try {
+    await Blog.findByIdAndRemove(req.params.id)
+    res.status(204).end()
+  } catch(e) {
+    next(e)
+  }
 })
 
 blogsRouter.put('/:id', async (req, res, next) => {
   const body = req.body
 
-  Blog.findByIdAndUpdate(req.params.id,
-    { likes: body.likes },
-    { new: true })
-    .then(updatedBlog => {
-      res.json(updatedBlog.toJSON())
-    })
-    .catch(error => next(error))
+  try {
+    const updatedBlog =
+      await Blog.findByIdAndUpdate(req.params.id,
+        { likes: body.likes },
+        { new: true })
+    res.json(updatedBlog.toJSON())
+  } catch(e) {
+    next(e)
+  }
 })
 
 module.exports = blogsRouter

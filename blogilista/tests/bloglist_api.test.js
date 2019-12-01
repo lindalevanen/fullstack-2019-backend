@@ -1,32 +1,55 @@
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const bcrypt = require('bcrypt')
+
 const app = require('../app')
 const Blog = require('../models/blog')
+const User = require('../models/user')
+const helpers = require('../utils/test_helpers.js')
 const api = supertest(app)
 
 const dummyBlogs = [
   {
     title: 'Bad blog',
-    author: 'Matti',
     url: 'lol@blog.com',
-    likes: 12
+    likes: 12,
+    user: 1
   },
   {
     title: 'Greatest blog',
-    author: 'Maija',
     url: 'loller@blog.com',
-    likes: 43
+    likes: 43,
+    user: 1
   },
 ]
 
+const dummyUser = {
+  username: 'lollers',
+  name: 'Lollero Pallero',
+  password: 'testi'
+}
+
+
 beforeEach(async () => {
   await Blog.deleteMany({})
+  await User.deleteMany({})
 
   let blogObject = new Blog(dummyBlogs[0])
   await blogObject.save()
 
   blogObject = new Blog(dummyBlogs[1])
   await blogObject.save()
+
+  const saltRounds = 10
+  const passwordHash = await bcrypt.hash(dummyUser.password, saltRounds)
+
+  const authorOfBoth = new User({
+    username: dummyUser.username,
+    name: dummyUser.name,
+    passwordHash,
+  })
+
+  await authorOfBoth.save()
 })
 
 
@@ -43,9 +66,10 @@ test('blog identifier should be id', async () => {
 })
 
 test('a blog can be added', async () => {
+  const users = await helpers.usersInDb()
   const newBlog = {
     title: 'Test blog',
-    author: 'Blob',
+    userId: users[0].id,
     url: 'blob@blog.com',
     likes: 0
   }
@@ -64,9 +88,11 @@ test('a blog can be added', async () => {
 })
 
 test('a blog without a likes-value can be added, and likes is defauled to 0', async () => {
+  const users = await helpers.usersInDb()
+
   const newBlog = {
     title: 'No likes blog',
-    author: 'Blob',
+    userId: users[0].id,
     url: 'blob@blog.com'
   }
 
@@ -83,8 +109,9 @@ test('a blog without a likes-value can be added, and likes is defauled to 0', as
 })
 
 test('a blog without title or url cannot be added', async () => {
+  const users = await helpers.usersInDb()
   const invalidBlog = {
-    author: 'Blob'
+    userId: users[0].id,
   }
 
   await api
