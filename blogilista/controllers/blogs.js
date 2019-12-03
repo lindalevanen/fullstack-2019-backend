@@ -4,7 +4,7 @@ const Blog = require('../models/blog')
 const User = require('../models/user')
 
 blogsRouter.get('/', async (req, res) => {
-  const blogs = await Blog.find({}).populate('author')
+  const blogs = await Blog.find({}).populate('user')
   res.json(blogs.map(b => b.toJSON()))
 })
 
@@ -18,7 +18,7 @@ blogsRouter.post('/', async (req, res, next) => {
     }
     const user = await User.findById(decodedToken.id)
 
-    const blog = new Blog({ ...req.body, author: user._id })
+    const blog = new Blog({ ...req.body, user: user._id })
 
     const savedBlog = await blog.save()
     user.blogs = user.blogs.concat(savedBlog._id)
@@ -40,7 +40,7 @@ blogsRouter.delete('/:id', async (req, res, next) => {
 
     const blogToBeRemoved = await Blog.findById(req.params.id)
 
-    if(user._id.toString() !== blogToBeRemoved.author.toString()) {
+    if(user._id.toString() !== blogToBeRemoved.user.toString()) {
       return res.status(401).json({ error: 'User unauthorized to delete this item.' })
     }
 
