@@ -8,6 +8,11 @@ blogsRouter.get('/', async (req, res) => {
   res.json(blogs.map(b => b.toJSON()))
 })
 
+blogsRouter.get('/:id', async (req, res) => {
+  const blog = await Blog.findById(req.params.id).populate('blogs')
+  res.json(blog)
+})
+
 blogsRouter.post('/', async (req, res, next) => {
   const token = req.token
 
@@ -23,6 +28,7 @@ blogsRouter.post('/', async (req, res, next) => {
     const savedBlog = await blog.save()
     user.blogs = user.blogs.concat(savedBlog._id)
     await user.save()
+    savedBlog.user = user
     res.status(201).json(savedBlog)
   } catch(exception) {
     next(exception)

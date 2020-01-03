@@ -2,9 +2,14 @@ const bcrypt = require('bcrypt')
 const usersRouter = require('express').Router()
 const User = require('../models/user')
 
-usersRouter.get('/', async (request, response) => {
+usersRouter.get('/', async (req, res) => {
   const users = await User.find({}).populate('blogs')
-  response.json(users.map(u => u.toJSON()))
+  res.json(users.map(u => u.toJSON()))
+})
+
+usersRouter.get('/:id', async (req, res) => {
+  const user = await User.findById(req.params.id).populate('blogs')
+  res.json(user)
 })
 
 usersRouter.post('/', async (request, response, next) => {
