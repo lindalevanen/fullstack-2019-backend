@@ -9,12 +9,20 @@ blogsRouter.get('/', async (req, res) => {
 })
 
 blogsRouter.get('/:id', async (req, res) => {
-  const blog = await Blog.findById(req.params.id).populate('blogs')
+  const blog = await Blog.findById(req.params.id).populate('user')
   res.json(blog)
+})
+
+blogsRouter.post('/:id/comments', async (req, res) => {
+  const blog = await Blog.findById(req.params.id)
+  blog.comments = blog.comments.concat(req.body.comment)
+  const savedBlog = await blog.save()
+  res.status(201).json(savedBlog)
 })
 
 blogsRouter.post('/', async (req, res, next) => {
   const token = req.token
+  console.log(req.body)
 
   try {
     const decodedToken = jwt.verify(token, process.env.SECRET)
