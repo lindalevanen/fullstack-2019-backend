@@ -1,4 +1,5 @@
 const { ApolloServer, gql } = require('apollo-server')
+const uuid = require('uuid/v1')
 
 let authors = [
   {
@@ -85,15 +86,86 @@ let books = [
 ]
 
 const typeDefs = gql`
-  type Query {
-    hello: String!
+  type Author {
+    name: String!
+    id: ID!
+    born: Int,
+    bookCount: Int
   }
+
+  type Book {
+    title: String!
+    published: Int!
+    author: String!
+    id: ID!
+    genres: [String!]!
+  }
+
+  type Query {
+    hello: String!,
+    bookCount: Int!,
+    authorCount: Int!,
+    allBooks(author: String, genre: String): [Book!]!,
+    allAuthors: [Author!]!
+  }
+
+  type Mutation {
+    addBook(
+      title: String!
+      published: Int!
+      author: String!
+      genres: [String!]!
+      ): Book,
+    editAuthor(
+      name: String!,
+      setBornTo: Int!
+    ): Author 
+  }
+  
 `
 
 const resolvers = {
   Query: {
-    hello: () => { return "world" }
+    hello: () => { return "world" },
+    bookCount: () => { return books.length },
+    authorCount: () => { return authors.length },
+    allBooks: (root, args) => {
+      let resBooks = books
+      if (args.author) {
+        resBooks = resBooks.filter(book => book.author === args.author)
+      }
+      if(args.genre) {
+        resBooks = resBooks.filter(book => book.genres.includes(args.genre))
+      }
+
+      return resBooks  
+    },
+    allAuthors: () => authors
+  },
+  Author: {
+    bookCount: (root) => {
+      return books.reduce((sum, current) => current.author === root.name ? sum + 1 : sum , 0)
+    }
+  },
+  Mutation: {
+    addBook: (root, args) => {
+      const book = { ...args, id: uuid() }
+      books = books.concat(book)
+      if(!authors.map(a => a.name).includes(args.author)) {
+        authors = authors.concat({name: args.author})
+      }
+      return book
+    },
+    editAuthor: (root, args) => {
+      if(authors.map(a => a.name).includes(args.name)) {
+        authors = authors.map(a => a.name === args.name ? ({...a, born: args.setBornTo}) : a)
+        return authors.find(a => a.name === args.name)
+      } else {
+        return null
+      }
+    }
   }
+
 }
 
 const server = new ApolloServer({
