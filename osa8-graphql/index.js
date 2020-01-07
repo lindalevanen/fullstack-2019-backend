@@ -2,6 +2,10 @@ const { ApolloServer, gql, UserInputError } = require('apollo-server')
 const mongoose = require('mongoose')
 const Book = require('./models/book')
 const Author = require('./models/author')
+const User = require('./models/user')
+
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 
 mongoose.set('useFindAndModify', false)
 
@@ -34,12 +38,23 @@ const typeDefs = gql`
     id: ID!
   }
 
+  type User {
+    username: String!
+    favoriteGenre: String!
+    id: ID!
+  }
+  
+  type Token {
+    value: String!
+  }
+  
   type Query {
     hello: String!,
     bookCount: Int!,
     authorCount: Int!,
     allBooks(author: String, genre: String): [Book!]!,
-    allAuthors: [Author!]!
+    allAuthors: [Author!]!,
+    me: User
   }
 
   type Mutation {
@@ -52,7 +67,15 @@ const typeDefs = gql`
     editAuthor(
       name: String!,
       setBornTo: Int!
-    ): Author 
+    ): Author,
+    createUser(
+      username: String!
+      favoriteGenre: String!
+    ): User
+    login(
+      username: String!
+      password: String!
+    ): Token
   }
   
 `
@@ -72,7 +95,15 @@ const resolvers = {
 
       return resBooks
     },
-    allAuthors: () => Author.find({})
+    allAuthors: () => Author.find({}),
+    me: (root, args, context) => {
+      if (!context.token) {
+        throw new UserInputError('Token missing or invalid', {
+          invalidArgs: context.token,
+        })
+      }
+      return User.findById(context.token.id)
+    } 
   },
   Author: {
     bookCount: async (root) => {
@@ -81,7 +112,13 @@ const resolvers = {
     }
   },
   Mutation: {
-    addBook: async (root, args) => {
+    addBook: async (root, args, context) => {
+      if (!context.token) {
+        throw new UserInputError('Token missing or invalid', {
+          invalidArgs: context.token,
+        })
+      }
+  
       if(!args.author) {
         throw new UserInputError('Author name required', {
           invalidArgs: args.author,
@@ -119,7 +156,13 @@ const resolvers = {
       }
       return savedBook.populate('author')
     },
-    editAuthor: async (root, args) => {
+    editAuthor: async (root, args, context) => {
+      if (!context.token) {
+        throw new UserInputError('Token missing or invalid', {
+          invalidArgs: context.token,
+        })
+      }
+
       const author = await Author.findOne({ name: args.name })
 
       if (author) {
@@ -130,14 +173,66 @@ const resolvers = {
           invalidArgs: args.name,
         })
       }
+    },
+    createUser: async (root, args) => {
+      if(!args.username) {
+        throw new UserInputError('Username required', {
+          invalidArgs: args.username
+        })
+      }
+      if(!args.favoriteGenre) {
+        throw new UserInputError('Favorite genre required', {
+          invalidArgs: args.favoriteGenre
+        })
+      }
+      if(args.username.length < 3) {
+        throw new UserInputError('Username too short! It must be 3 or more characters.', {
+          invalidArgs: args.password
+        })
+      }
+  
+      const saltRounds = 10
+      const passwordHash = await bcrypt.hash("test", saltRounds)
+  
+      const user = new User({
+        username: args.username,
+        favoriteGenre: args.favoriteGenre,
+        passwordHash
+      })
+      return user.save()
+    },
+    login: async (root, args) => {
+      const user = await User.findOne({ username: args.username })
+      const passwordCorrect = user && await bcrypt.compare(args.password, user.passwordHash)
+
+      if (!passwordCorrect) {
+        throw new UserInputError('invalid username or password.', {
+          invalidArgs: Object.keys(args)
+        })
+      }
+
+      const userForToken = {
+        ...user,
+        id: user._id,
+      }
+
+      return ({value: jwt.sign(userForToken, "LOLLERO")})
     }
   }
-
 }
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: ({req}) => {
+    const tokenWithBearer = req.headers.authorization || '';
+    const token = tokenWithBearer.split(' ')[1]
+    try {
+      return ({ token: jwt.verify(token, "LOLLERO") })
+    } catch (e) {
+      return ({ token: null });
+    }
+  }
 })
 
 server.listen().then(({ url }) => {
