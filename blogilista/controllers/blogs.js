@@ -22,7 +22,6 @@ blogsRouter.post('/:id/comments', async (req, res) => {
 
 blogsRouter.post('/', async (req, res, next) => {
   const token = req.token
-  console.log(req.body)
 
   try {
     const decodedToken = jwt.verify(token, process.env.SECRET)
